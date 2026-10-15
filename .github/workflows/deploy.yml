@@ -36,11 +36,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build frontend
+           - name: Build frontend
         run: npm run build
         env:
           VITE_BASE_PATH: /OceanMind/
-
+          VITE_API_BASE_URL: https://oceanmind.onrender.com
       - name: Upload website files
         uses: actions/upload-pages-artifact@v3
         with:
