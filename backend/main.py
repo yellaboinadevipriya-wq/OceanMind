@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import DATABASE_PATH, get_connection, initialize_database
 from import_service import import_csv_dataset
+from enhancements import router as enhancements_router
 
 
 @asynccontextmanager
@@ -23,6 +24,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+app.include_router(enhancements_router)
 
 
 # CORS: Allow local development and the deployed Netlify frontend.

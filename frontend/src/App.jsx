@@ -6,6 +6,7 @@ import Topbar from "./components/Topbar";
 
 import Dashboard from "./pages/Dashboard";
 import OceanExplorer from "./pages/OceanExplorer";
+import SatelliteImagery from "./pages/SatelliteImagery";
 import Anomalies from "./pages/Anomalies";
 import DataCenter from "./pages/DataCenter";
 import SystemStatus from "./pages/SystemStatus";
@@ -15,6 +16,7 @@ import "./styles/global.css";
 const PAGES = {
   Dashboard,
   "Ocean Explorer": OceanExplorer,
+  "Satellite Imagery": SatelliteImagery,
   Anomalies,
   "Data Center": DataCenter,
   "System Status": SystemStatus,

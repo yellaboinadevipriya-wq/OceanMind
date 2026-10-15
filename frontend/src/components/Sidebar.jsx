@@ -4,6 +4,7 @@ import {
   Waves,
   LayoutDashboard,
   Globe2,
+  Satellite,
   AlertTriangle,
   Database,
   Settings2,
@@ -13,6 +14,7 @@ import {
 const navigation = [
   { label: "Dashboard", icon: LayoutDashboard },
   { label: "Ocean Explorer", icon: Globe2 },
+  { label: "Satellite Imagery", icon: Satellite },
   { label: "Anomalies", icon: AlertTriangle },
   { label: "Data Center", icon: Database },
 ];
@@ -81,7 +83,7 @@ export default function Sidebar({ activePage, onNavigate }) {
 
         <div className="sidebar-footer">
           <span className="footer-indicator" />
-          OceanMind · Development
+          OceanMind Â· Development
         </div>
       </div>
     </aside>
