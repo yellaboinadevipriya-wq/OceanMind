@@ -37,8 +37,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build frontend
+            - name: Build frontend
         run: npm run build
+        env:
+          VITE_BASE_PATH: /OceanMind/
 
       - name: Upload website files
         uses: actions/upload-pages-artifact@v3
