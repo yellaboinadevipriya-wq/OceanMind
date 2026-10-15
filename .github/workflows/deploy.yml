@@ -1,5 +1,4 @@
-
-name: Deploy OceanMind Frontend
+﻿name: Deploy OceanMind Frontend
 
 on:
   push:
@@ -37,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-            - name: Build frontend
+      - name: Build frontend
         run: npm run build
         env:
           VITE_BASE_PATH: /OceanMind/
