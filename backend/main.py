@@ -1,15 +1,13 @@
 
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import DATABASE_PATH, get_connection, initialize_database
 from import_service import import_csv_dataset
-from fastapi import HTTPException
-from pathlib import Path
-from fastapi import Query
 
 
 @asynccontextmanager
@@ -26,8 +24,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-from fastapi.middleware.cors import CORSMiddleware
 
+# CORS: Allow local development and the deployed Netlify frontend.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -35,6 +33,7 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5174",
+        "https://luxury-lebkuchen-eb14b9.netlify.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -77,11 +76,11 @@ def database_status():
         "observations": observation_count,
         "processing_jobs": history_count,
     }
+
+
 @app.post("/database/import-default-dataset")
 def import_default_dataset():
-    dataset_path = (
-        Path.home() / "Downloads" / "Ocean_sst.csv"
-    )
+    dataset_path = Path.home() / "Downloads" / "Ocean_sst.csv"
 
     if not dataset_path.is_file():
         raise HTTPException(
@@ -93,6 +92,7 @@ def import_default_dataset():
         return import_csv_dataset(str(dataset_path))
     except (ValueError, OSError) as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
 
 @app.get("/dashboard/summary")
 def dashboard_summary():
@@ -116,14 +116,20 @@ def dashboard_summary():
 
     return {
         "total_observations": total,
-        "average_sst_celsius": round(stats["average_sst"], 3)
-        if stats["average_sst"] is not None else None,
-        "average_temperature_anomaly_celsius": round(
-            stats["average_anomaly"], 3
-        ) if stats["average_anomaly"] is not None else None,
+        "average_sst_celsius": (
+            round(stats["average_sst"], 3)
+            if stats["average_sst"] is not None
+            else None
+        ),
+        "average_temperature_anomaly_celsius": (
+            round(stats["average_anomaly"], 3)
+            if stats["average_anomaly"] is not None
+            else None
+        ),
         "anomaly_count": anomalies,
-        "anomaly_percentage": round(anomalies * 100 / total, 2)
-        if total else 0,
+        "anomaly_percentage": (
+            round(anomalies * 100 / total, 2) if total else 0
+        ),
         "dataset_count": stats["dataset_count"] or 0,
         "processing_jobs": history_count,
     }
@@ -137,9 +143,14 @@ def list_observations(
     with get_connection() as connection:
         rows = connection.execute("""
             SELECT
-                id, observation_time, latitude, longitude,
-                sea_surface_temperature, temperature_anomaly,
-                source, is_anomaly
+                id,
+                observation_time,
+                latitude,
+                longitude,
+                sea_surface_temperature,
+                temperature_anomaly,
+                source,
+                is_anomaly
             FROM observations
             ORDER BY id DESC
             LIMIT ? OFFSET ?
@@ -163,8 +174,7 @@ def map_observations(
 ):
     """Return observations sampled across geographic grid cells."""
     with get_connection() as connection:
-        rows = connection.execute(
-            """
+        rows = connection.execute("""
             WITH ranked_observations AS (
                 SELECT
                     id,
@@ -197,19 +207,18 @@ def map_observations(
             FROM ranked_observations
             WHERE location_rank = 1
             ORDER BY
-    CAST((latitude + 90) / 10 AS INTEGER),
-    CAST((longitude + 180) / 10 AS INTEGER)
-LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+                CAST((latitude + 90) / 10 AS INTEGER),
+                CAST((longitude + 180) / 10 AS INTEGER)
+            LIMIT ?
+        """, (limit,)).fetchall()
 
     return {
         "total": len(rows),
-        "sampling_method": "One observation per 10-degree geographic grid cell",
+        "sampling_method": (
+            "One observation per 10-degree geographic grid cell"
+        ),
         "observations": [dict(row) for row in rows],
     }
-
 
 
 @app.get("/anomalies/summary")
@@ -218,8 +227,10 @@ def anomaly_summary():
         result = connection.execute("""
             SELECT
                 COUNT(*) AS total,
-                AVG(ABS(temperature_anomaly)) AS average_absolute_anomaly,
-                MAX(ABS(temperature_anomaly)) AS maximum_absolute_anomaly
+                AVG(ABS(temperature_anomaly))
+                    AS average_absolute_anomaly,
+                MAX(ABS(temperature_anomaly))
+                    AS maximum_absolute_anomaly
             FROM observations
             WHERE is_anomaly = 1
               AND ABS(temperature_anomaly) >= 2.0
@@ -227,15 +238,18 @@ def anomaly_summary():
 
     return {
         "anomaly_count": result["total"] or 0,
-        "average_flagged_anomaly_celsius": round(
-            result["average_absolute_anomaly"], 3
-        ) if result["average_absolute_anomaly"] is not None else None,
-        "maximum_absolute_anomaly_celsius": round(
-            result["maximum_absolute_anomaly"], 3
-        ) if result["maximum_absolute_anomaly"] is not None else None,
+        "average_flagged_anomaly_celsius": (
+            round(result["average_absolute_anomaly"], 3)
+            if result["average_absolute_anomaly"] is not None
+            else None
+        ),
+        "maximum_absolute_anomaly_celsius": (
+            round(result["maximum_absolute_anomaly"], 3)
+            if result["maximum_absolute_anomaly"] is not None
+            else None
+        ),
         "method": "Absolute temperature anomaly >= 2.0°C",
     }
-
 
 
 @app.get("/anomalies/records")
@@ -246,8 +260,12 @@ def anomaly_records(
     with get_connection() as connection:
         rows = connection.execute("""
             SELECT
-                id, observation_time, latitude, longitude,
-                sea_surface_temperature, temperature_anomaly,
+                id,
+                observation_time,
+                latitude,
+                longitude,
+                sea_surface_temperature,
+                temperature_anomaly,
                 source
             FROM observations
             WHERE is_anomaly = 1
@@ -274,8 +292,12 @@ def processing_history(
     with get_connection() as connection:
         rows = connection.execute("""
             SELECT
-                id, filename, records_processed, anomalies_found,
-                status, created_at
+                id,
+                filename,
+                records_processed,
+                anomalies_found,
+                status,
+                created_at
             FROM processing_history
             ORDER BY id DESC
             LIMIT ?
