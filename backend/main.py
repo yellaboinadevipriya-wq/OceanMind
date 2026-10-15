@@ -37,6 +37,7 @@ app.add_middleware(
         "http://localhost:5174",
         "http://127.0.0.1:5174",
         "https://luxury-lebkuchen-eb14b9.netlify.app",
+        "https://yellaboinadevipriya-wq.github.io",
     ],
     allow_credentials=True,
     allow_methods=["*"],
